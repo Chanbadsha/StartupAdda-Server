@@ -177,6 +177,22 @@ const run = async () => {
         res.status(500).json({ success: false, error: error.message });
       }
     });
+    // Delete Comment
+    app.delete("/comment", async (req, res) => {
+      try {
+        const commentId = req.body;
+        const filter = {
+          _id: new ObjectId(commentId._id),
+        };
+
+        const result = await CommentsCollection.deleteOne(filter);
+
+        res.json({ success: true, result });
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
 
     // Update Ideas by id
 
