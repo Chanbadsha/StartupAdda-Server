@@ -53,12 +53,75 @@ const run = async () => {
     });
     // Get Single Startup Ideas By Id
     app.get("/ideas/:ideasId", async (req, res) => {
-      const { ideasId } = await req.params;
+      const { ideasId } = req.params;
+      const idd = new ObjectId(ideasId);
       const filter = {
         _id: new ObjectId(ideasId),
       };
+
       const ideas = await StartUpCollection.findOne(filter);
-      res.json(ideas);
+
+      const result = await StartUpCollection.aggregate([
+        {
+          $match: {
+            _id: new ObjectId(ideasId),
+          },
+        },
+
+        //  COMMENTS + USER in ONE PIPELINE
+        {
+          $lookup: {
+            from: "CommentsCollection",
+            let: { ideaId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ["$postId", "$$ideaId"],
+                  },
+                },
+              },
+
+              // join user for each comment
+              {
+                $lookup: {
+                  from: "user",
+                  localField: "userId",
+                  foreignField: "_id",
+                  as: "user",
+                },
+              },
+
+              {
+                $unwind: "$user",
+              },
+
+              // shape comment
+              {
+                $project: {
+                  _id: 1,
+                  comment: 1,
+                  createdAt: 1,
+                  user: {
+                    _id: 1,
+                    name: 1,
+                    email: 1,
+                    image: 1,
+                  },
+                },
+              },
+
+              // sort comments
+              {
+                $sort: { createdAt: -1 },
+              },
+            ],
+            as: "comments",
+          },
+        },
+      ]).toArray();
+
+      res.json(result[0]);
     });
 
     // Post idea
@@ -67,16 +130,52 @@ const run = async () => {
 
       const docs = { ...postData };
       const data = await StartUpCollection.insertOne(docs);
-      // console.log(data);
+
       res.json({ success: true, data });
     });
 
-    // Post comment
+    // Post Comment
     app.post("/comment", async (req, res) => {
-      const comments = req.body;
-      const data = await CommentsCollection.insertOne(comments);
-      // console.log(data);
-      res.json({ success: true, data });
+      try {
+        const { userId, postId, comment } = req.body;
+
+        const comments = {
+          userId: new ObjectId(userId),
+          postId: new ObjectId(postId),
+          comment,
+          createdAt: new Date(),
+        };
+
+        const data = await CommentsCollection.insertOne(comments);
+
+        res.json({ success: true, data });
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+    // Update Comment
+    app.patch("/comment", async (req, res) => {
+      try {
+        const { commentId, comment } = req.body;
+        const filter = {
+          _id: new ObjectId(commentId),
+        };
+        const updateComment = {
+          $set: {
+            comment: comment,
+          },
+        };
+        const result = await CommentsCollection.updateMany(
+          filter,
+          updateComment,
+        );
+
+        res.json({ success: true, result });
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, error: error.message });
+      }
     });
 
     // Update Ideas by id
