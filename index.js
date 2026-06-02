@@ -11,7 +11,10 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send("Welcome to the startup-adda backend");
+  res.json({
+    success: true,
+    message: "Welcome to the startup add backend server",
+  });
 });
 
 // Mongodb connect
@@ -31,13 +34,22 @@ const run = async () => {
     // Data Base
     const startupDataBase = client.db("StartUpAdda");
     const StartUpCollection = startupDataBase.collection("StartUpCollection");
+    const CommentsCollection = startupDataBase.collection("CommentsCollection");
 
     // Crude Operation
 
-    // Get ALl Startup Ideas
+    // Get all data
     app.get("/ideas", async (req, res) => {
-      const ideas = await StartUpCollection.find({}).toArray();
-      res.json(ideas);
+      try {
+        const ideas = await StartUpCollection.find({}).toArray();
+
+        res.status(200).json(ideas);
+      } catch (error) {
+        res.status(500).json({
+          message: "Failed to fetch ideas",
+          error: error.message,
+        });
+      }
     });
     // Get Single Startup Ideas By Id
     app.get("/ideas/:ideasId", async (req, res) => {
@@ -48,6 +60,26 @@ const run = async () => {
       const ideas = await StartUpCollection.findOne(filter);
       res.json(ideas);
     });
+
+    // Post idea
+    app.post("/ideas", async (req, res) => {
+      const postData = req.body;
+
+      const docs = { ...postData };
+      const data = await StartUpCollection.insertOne(docs);
+      // console.log(data);
+      res.json({ success: true, data });
+    });
+
+    // Post comment
+    app.post("/comment", async (req, res) => {
+      const comments = req.body;
+      const data = await CommentsCollection.insertOne(comments);
+      // console.log(data);
+      res.json({ success: true, data });
+    });
+
+    // Update Ideas by id
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
