@@ -42,7 +42,6 @@ const run = async () => {
     app.get("/ideas", async (req, res) => {
       try {
         const ideas = await StartUpCollection.find({}).toArray();
-
         res.status(200).json(ideas);
       } catch (error) {
         res.status(500).json({
@@ -51,6 +50,7 @@ const run = async () => {
         });
       }
     });
+
     // Get Single Startup Ideas By Id
     app.get("/ideas/:ideasId", async (req, res) => {
       const { ideasId } = req.params;
@@ -124,6 +124,26 @@ const run = async () => {
       res.json(result[0]);
     });
 
+    // Get data by creator
+    app.get("/idea/:creatorId", async (req, res) => {
+      try {
+        const { creatorId } = req.params;
+
+        const filter = {
+          "creator.id": creatorId,
+        };
+
+        const ideas = await StartUpCollection.find(filter).toArray();
+
+        res.status(200).json(ideas);
+      } catch (error) {
+        res.status(500).json({
+          message: "Failed to fetch ideas",
+          error: error.message,
+        });
+      }
+    });
+
     // Post idea
     app.post("/ideas", async (req, res) => {
       const postData = req.body;
@@ -154,6 +174,7 @@ const run = async () => {
         res.status(500).json({ success: false, error: error.message });
       }
     });
+
     // Update Comment
     app.patch("/comment", async (req, res) => {
       try {
@@ -187,6 +208,23 @@ const run = async () => {
 
         const result = await CommentsCollection.deleteOne(filter);
 
+        res.json({ success: true, result });
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+    // Delete Idea
+    app.delete("/idea", async (req, res) => {
+      try {
+        const { ideaId } = req.body;
+
+        const filter = {
+          _id: new ObjectId(ideaId),
+        };
+
+        const result = await StartUpCollection.deleteOne(filter);
+        console.log(result);
         res.json({ success: true, result });
       } catch (error) {
         console.log(error);
