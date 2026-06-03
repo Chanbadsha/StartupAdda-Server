@@ -198,6 +198,26 @@ const run = async () => {
         res.status(500).json({ success: false, error: error.message });
       }
     });
+    // Update Idea
+    app.patch("/idea", async (req, res) => {
+      try {
+        const { ideaId, ideaEditText } = req.body;
+        const filter = {
+          _id: new ObjectId(ideaId),
+        };
+        const updateIdea = {
+          $set: {
+            ...ideaEditText,
+          },
+        };
+        const result = await StartUpCollection.updateMany(filter, updateIdea);
+
+        res.json({ success: true, result });
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
     // Delete Comment
     app.delete("/comment", async (req, res) => {
       try {
