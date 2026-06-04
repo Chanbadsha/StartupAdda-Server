@@ -51,6 +51,26 @@ const run = async () => {
       }
     });
 
+    // Get Comment By UserId
+    app.get("/comment/:userId", async (req, res) => {
+      try {
+        const { userId } = req.params;
+
+        const filter = {
+          userId: new ObjectId(userId),
+        };
+        console.log(filter);
+        const comment = await CommentsCollection.find(filter).toArray();
+        console.log(comment);
+        res.status(200).json(comment);
+      } catch (error) {
+        res.status(500).json({
+          message: "Failed to fetch comment",
+          error: error.message,
+        });
+      }
+    });
+
     // Get Single Startup Ideas By Id
     app.get("/ideas/:ideasId", async (req, res) => {
       const { ideasId } = req.params;
@@ -157,12 +177,13 @@ const run = async () => {
     // Post Comment
     app.post("/comment", async (req, res) => {
       try {
-        const { userId, postId, comment } = req.body;
+        const { userId, postId, comment, ideaTitle } = req.body;
 
         const comments = {
           userId: new ObjectId(userId),
           postId: new ObjectId(postId),
           comment,
+          ideaTitle,
           createdAt: new Date(),
         };
 
