@@ -41,7 +41,33 @@ const run = async () => {
     // Get all data
     app.get("/ideas", async (req, res) => {
       try {
-        const ideas = await StartUpCollection.find({}).toArray();
+        const { search = "", category = "", sort = "desc" } = req.query;
+
+        const query = {};
+
+        //  SEARCH (title or description)
+        if (search) {
+          query.$or = [
+            { ideaTitle: { $regex: search, $options: "i" } },
+            { shortDescription: { $regex: search, $options: "i" } },
+            { tags: { $regex: search, $options: "i" } },
+          ];
+        }
+
+        // CATEGORY FILTER
+        if (category) {
+          query.category = category;
+          // console.log(category);
+        }
+
+        // SORT
+        const sortOption =
+          sort === "asc" ? { createdAt: 1 } : { createdAt: -1 };
+
+        const ideas = await StartUpCollection.find(query)
+          .sort(sortOption)
+          .toArray();
+
         res.status(200).json(ideas);
       } catch (error) {
         res.status(500).json({
@@ -59,9 +85,9 @@ const run = async () => {
         const filter = {
           userId: new ObjectId(userId),
         };
-        console.log(filter);
+
         const comment = await CommentsCollection.find(filter).toArray();
-        console.log(comment);
+
         res.status(200).json(comment);
       } catch (error) {
         res.status(500).json({
@@ -191,7 +217,7 @@ const run = async () => {
 
         res.json({ success: true, data });
       } catch (error) {
-        console.log(error);
+        // console.log(error);
         res.status(500).json({ success: false, error: error.message });
       }
     });
@@ -215,7 +241,7 @@ const run = async () => {
 
         res.json({ success: true, result });
       } catch (error) {
-        console.log(error);
+        // console.log(error);
         res.status(500).json({ success: false, error: error.message });
       }
     });
@@ -235,7 +261,7 @@ const run = async () => {
 
         res.json({ success: true, result });
       } catch (error) {
-        console.log(error);
+        // console.log(error);
         res.status(500).json({ success: false, error: error.message });
       }
     });
@@ -251,7 +277,7 @@ const run = async () => {
 
         res.json({ success: true, result });
       } catch (error) {
-        console.log(error);
+        // console.log(error);
         res.status(500).json({ success: false, error: error.message });
       }
     });
@@ -265,10 +291,10 @@ const run = async () => {
         };
 
         const result = await StartUpCollection.deleteOne(filter);
-        console.log(result);
+
         res.json({ success: true, result });
       } catch (error) {
-        console.log(error);
+        // console.log(error);
         res.status(500).json({ success: false, error: error.message });
       }
     });
