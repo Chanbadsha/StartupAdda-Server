@@ -86,7 +86,6 @@ const run = async () => {
         // CATEGORY FILTER
         if (category) {
           query.category = category;
-          // console.log(category);
         }
 
         // SORT
@@ -129,7 +128,7 @@ const run = async () => {
     // Get Single Startup Ideas By Id
     app.get("/ideas/:ideasId", async (req, res) => {
       const { ideasId } = req.params;
-      // console.log(ideasId);
+
       const filter = {
         _id: new ObjectId(ideasId),
       };
