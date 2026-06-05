@@ -342,5 +342,5 @@ const run = async () => {
 run().catch(console.dir);
 
 app.listen(port, () => {
-  // console.log(`The startup adda server is running on port ${port}`);
+  console.log(`The startup adda server is running on port ${port}`);
 });
