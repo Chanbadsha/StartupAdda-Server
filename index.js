@@ -3,6 +3,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 const port = process.env.PORT || 5000;
 const url = process.env.MONGODB_URL || "";
 
@@ -26,10 +27,38 @@ const client = new MongoClient(url, {
     deprecationErrors: true,
   },
 });
+
+const JWKS = createRemoteJWKSet(
+  new URL(`${process.env.FRONTEND_URL}/api/auth/jwks`),
+);
+
+const verifyToken = async (req, res, next) => {
+  try {
+    const authHeader = req?.headers?.authorization;
+    console.log(authHeader);
+    if (!authHeader) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    const { payload } = await jwtVerify(token, JWKS);
+
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or expired token",
+    });
+  }
+};
 const run = async () => {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
+    await client.connect();
 
     // Data Base
     const startupDataBase = client.db("StartUpAdda");
@@ -98,9 +127,9 @@ const run = async () => {
     });
 
     // Get Single Startup Ideas By Id
-    app.get("/ideas/:ideasId", async (req, res) => {
+    app.get("/ideas/:ideasId", verifyToken, async (req, res) => {
       const { ideasId } = req.params;
-      const idd = new ObjectId(ideasId);
+      console.log(ideasId);
       const filter = {
         _id: new ObjectId(ideasId),
       };
@@ -302,10 +331,10 @@ const run = async () => {
     // Update Ideas by id
 
     // Send a ping to confirm a successful connection
-    // await client.db("admin").command({ ping: 1 });
-    // console.log(
-    //   "Pinged your deployment. You successfully connected to MongoDB!",
-    // );
+    await client.db("admin").command({ ping: 1 });
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!",
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -314,5 +343,5 @@ const run = async () => {
 run().catch(console.dir);
 
 app.listen(port, () => {
-  // console.log(`The startup adda server is running on port ${port}`);
+  console.log(`The startup adda server is running on port ${port}`);
 });
