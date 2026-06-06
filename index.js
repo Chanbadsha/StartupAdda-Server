@@ -58,7 +58,7 @@ const verifyToken = async (req, res, next) => {
 const run = async () => {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
+    await client.connect();
 
     // Data Base
     const startupDataBase = client.db("StartUpAdda");
@@ -126,7 +126,7 @@ const run = async () => {
     });
 
     // Get Single Startup Ideas By Id
-    app.get("/ideas/:ideasId", async (req, res) => {
+    app.get("/ideas/:ideasId", verifyToken, async (req, res) => {
       const { ideasId } = req.params;
 
       const filter = {
@@ -199,7 +199,7 @@ const run = async () => {
     });
 
     // Get data by creator
-    app.get("/idea/:creatorId", async (req, res) => {
+    app.get("/idea/:creatorId", verifyToken, async (req, res) => {
       try {
         const { creatorId } = req.params;
 
@@ -229,7 +229,7 @@ const run = async () => {
     });
 
     // Post Comment
-    app.post("/comment", async (req, res) => {
+    app.post("/comment", verifyToken, async (req, res) => {
       try {
         const { userId, postId, comment, ideaTitle } = req.body;
 
@@ -251,7 +251,7 @@ const run = async () => {
     });
 
     // Update Comment
-    app.patch("/comment", async (req, res) => {
+    app.patch("/comment", verifyToken, async (req, res) => {
       try {
         const { commentId, comment } = req.body;
         const filter = {
@@ -294,7 +294,7 @@ const run = async () => {
       }
     });
     // Delete Comment
-    app.delete("/comment", async (req, res) => {
+    app.delete("/comment", verifyToken, async (req, res) => {
       try {
         const commentId = req.body;
         const filter = {
@@ -342,5 +342,5 @@ const run = async () => {
 run().catch(console.dir);
 
 app.listen(port, () => {
-  console.log(`The startup adda server is running on port ${port}`);
+  // console.log(`The startup adda server is running on port ${port}`);
 });
